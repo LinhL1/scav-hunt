@@ -1,8 +1,19 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { currentUser, friends } from "@/lib/mock-data";
 import { Settings, Sparkles } from "lucide-react";
+import ProfilePhotoEditor from "@/components/ProfilePhotoEditor";
+import SettingsDrawer, { type Preferences } from "@/components/SettingsDrawer";
 
 export default function Profile() {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [avatar, setAvatar] = useState(currentUser.avatar);
+  const [preferences, setPreferences] = useState<Preferences>({
+    darkMode: false,
+    reduceMotion: false,
+    soundEffects: true,
+  });
+
   return (
     <main className="min-h-screen px-6 pb-24 pt-8">
       <div className="mx-auto max-w-sm">
@@ -14,6 +25,7 @@ export default function Profile() {
         >
           <h1 className="text-2xl font-bold text-foreground">Profile</h1>
           <button
+            onClick={() => setSettingsOpen(true)}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring outline-none"
             aria-label="Settings"
           >
@@ -28,11 +40,7 @@ export default function Profile() {
           transition={{ delay: 0.1 }}
           className="flex flex-col items-center gap-4 rounded-2xl bg-card p-6 shadow-card"
         >
-          <img
-            src={currentUser.avatar}
-            alt="Your profile photo"
-            className="h-20 w-20 rounded-full object-cover ring-4 ring-primary/20"
-          />
+          <ProfilePhotoEditor currentAvatar={avatar} onAvatarChange={setAvatar} />
           <div className="text-center">
             <h2 className="text-lg font-bold text-foreground">{currentUser.name}</h2>
             <p className="text-sm text-muted-foreground">Joined the hunt</p>
@@ -91,6 +99,13 @@ export default function Profile() {
           </div>
         </motion.div>
       </div>
+
+      <SettingsDrawer
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        preferences={preferences}
+        onPreferencesChange={setPreferences}
+      />
     </main>
   );
 }
