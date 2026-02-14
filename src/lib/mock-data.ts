@@ -33,7 +33,7 @@ export const mockPrompts: string[] = [
   "Something tiny",
   "Golden hour",
   "Favorite texture",
-  "A heart shape in the wild",
+  "A heart shaped...",
   "Warm light",
   "Still life",
   "Morning sky",

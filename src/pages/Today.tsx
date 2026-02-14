@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { generatePrompts } from "@/lib/ai/generatePrompt";
@@ -13,25 +13,21 @@ function isScreenReaderOn(): boolean {
   }
 }
 
-const CARD_COLORS = [
-  "from-orange-400/20 to-amber-300/10",
-  "from-rose-400/20 to-pink-300/10",
-  "from-teal-400/20 to-emerald-300/10",
-];
+const CARD_COLORS = ["bg-orange-400", "bg-rose-400", "bg-teal-400"];
+const CARD_ACCENTS = ["text-orange-100", "text-rose-100", "text-teal-100"];
+const DRAG_THRESHOLD = 50;
 
-const CARD_ACCENTS = [
-  "text-orange-500 dark:text-orange-400",
-  "text-rose-500 dark:text-rose-400",
-  "text-teal-500 dark:text-teal-400",
-];
-
-const DRAG_THRESHOLD = 60;
+// Fixed card dimensions
+const CARD_WIDTH = 280;
+const CARD_HEIGHT = 260;
+// How far side cards are offset from center
+const CARD_OFFSET = 200;
 
 export default function Today() {
   const [prompts, setPrompts] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [current, setCurrent] = useState(0);
-  const [direction, setDirection] = useState(0); // -1 left, 1 right
+  const [dragX, setDragX] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,36 +35,31 @@ export default function Today() {
       setPrompts(p);
       setLoading(false);
       if (isScreenReaderOn()) {
-        speakText(`Today you have ${p.length} prompts to choose from. ${p.map((pr, i) => `Option ${i + 1}: ${pr}`).join(". ")}.`);
+        speakText(
+          `Today you have ${p.length} prompts to choose from. ${p
+            .map((pr, i) => `Option ${i + 1}: ${pr}`)
+            .join(". ")}.`
+        );
       }
     });
   }, []);
 
   const goTo = (index: number) => {
-    if (index === current) return;
-    setDirection(index > current ? 1 : -1);
+    if (index < 0 || index >= prompts.length || index === current) return;
     setCurrent(index);
+    setDragX(0);
   };
 
   const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
-    if (info.offset.x < -DRAG_THRESHOLD && current < prompts.length - 1) {
-      goTo(current + 1);
-    } else if (info.offset.x > DRAG_THRESHOLD && current > 0) {
-      goTo(current - 1);
-    }
+    if (info.offset.x < -DRAG_THRESHOLD) goTo(current + 1);
+    else if (info.offset.x > DRAG_THRESHOLD) goTo(current - 1);
+    setDragX(0);
   };
 
   const handleSelect = () => {
     if (!prompts[current]) return;
-    // Store selected prompt so CameraPage picks it up
     sessionStorage.setItem("sh_selected_prompt", prompts[current]);
     navigate("/camera");
-  };
-
-  const variants = {
-    enter: (dir: number) => ({ x: dir > 0 ? 280 : -280, opacity: 0, scale: 0.92 }),
-    center: { x: 0, opacity: 1, scale: 1 },
-    exit: (dir: number) => ({ x: dir > 0 ? -280 : 280, opacity: 0, scale: 0.92 }),
   };
 
   return (
@@ -84,54 +75,92 @@ export default function Today() {
 
       <div className="flex w-full flex-1 flex-col items-center justify-center gap-8">
 
-        {/* Carousel */}
-        <div className="relative w-full max-w-sm overflow-hidden" style={{ height: 220 }}>
+        {/* 
+          Carousel wrapper:
+          - overflow-hidden clips side cards so they don't extend the page
+          - Cards are positioned absolutely relative to the center using translateX
+        */}
+        <div
+          className="relative w-full overflow-hidden"
+          style={{ height: CARD_HEIGHT }}
+        >
           {loading ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-3xl bg-card shadow-card"
+            <div
+              className="absolute top-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-card shadow-card"
+              style={{
+                width: CARD_WIDTH,
+                height: CARD_HEIGHT,
+                left: "50%",
+                transform: "translateX(-50%)",
+              }}
             >
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               <p className="text-sm text-muted-foreground">Finding today's prompts...</p>
-            </motion.div>
+            </div>
           ) : (
-            <AnimatePresence custom={direction} mode="wait">
-              <motion.div
-                key={current}
-                custom={direction}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ type: "spring", stiffness: 320, damping: 32 }}
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.18}
-                onDragEnd={handleDragEnd}
-                className={`absolute inset-0 flex cursor-grab flex-col items-center justify-center gap-5 rounded-3xl bg-gradient-to-br ${CARD_COLORS[current % CARD_COLORS.length]} bg-card px-8 shadow-card select-none active:cursor-grabbing`}
-                style={{ background: undefined }}
-              >
-                {/* Card background */}
-                <div className={`absolute inset-0 rounded-3xl bg-card`} />
-                <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${CARD_COLORS[current % CARD_COLORS.length]} opacity-60`} />
+            <>
+              {prompts.map((prompt, index) => {
+                const offset = index - current;
+                if (Math.abs(offset) > 1) return null;
 
-                {/* Prompt number */}
-                <div className="relative z-10 flex flex-col items-center gap-3">
-                  <span className={`text-xs font-bold uppercase tracking-widest ${CARD_ACCENTS[current % CARD_ACCENTS.length]}`}>
-                    Prompt {current + 1} of {prompts.length}
-                  </span>
+                const isActive = offset === 0;
 
-                  <h2 className="text-center text-3xl font-bold text-foreground leading-tight">
-                    {prompts[current]}
-                  </h2>
+                // x position: center of screen + offset + drag influence
+                const xPos = offset * CARD_OFFSET + (isActive ? dragX * 0.85 : dragX * 0.25);
 
-                  <p className="text-xs text-muted-foreground">
-                    Swipe to see more
-                  </p>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                return (
+                  <motion.div
+                    key={index}
+                    animate={{
+                      x: xPos,
+                      scale: isActive ? 1 : 0.84,
+                      opacity: isActive ? 1 : 0.55,
+                    }}
+                    transition={{ type: "spring", stiffness: 340, damping: 34 }}
+                    drag={isActive ? "x" : false}
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.1}
+                    onDrag={(_: unknown, info: { offset: { x: number } }) => {
+                      if (isActive) setDragX(info.offset.x);
+                    }}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => !isActive && goTo(index)}
+                    className={`absolute top-0 flex flex-col items-center justify-center gap-4 rounded-2xl ${
+                      CARD_COLORS[index % CARD_COLORS.length]
+                    } shadow-elevated select-none ${
+                      isActive ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                    }`}
+                    style={{
+                      width: CARD_WIDTH,
+                      height: CARD_HEIGHT,
+                      // Center the card horizontally
+                      left: `calc(50% - ${CARD_WIDTH / 2}px)`,
+                      zIndex: isActive ? 10 : 5,
+                    }}
+                  >
+                    {/* Dashed perforation line */}
+                    <div className="absolute left-5 right-5 top-1/2 border-t-2 border-dashed border-white/30" />
+
+                    {/* Content */}
+                    <div className="relative z-10 flex flex-col items-center gap-2 px-6">
+                      <span
+                        className={`text-xs font-bold uppercase tracking-widest ${
+                          CARD_ACCENTS[index % CARD_ACCENTS.length]
+                        } opacity-80`}
+                      >
+                        Prompt {index + 1} of {prompts.length}
+                      </span>
+                      <h2 className="text-center text-3xl font-bold text-white leading-tight drop-shadow-sm">
+                        {prompt}
+                      </h2>
+                      {isActive && (
+                        <p className="mt-1 text-xs text-white/60">Swipe to see more</p>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </>
           )}
         </div>
 
@@ -148,13 +177,10 @@ export default function Today() {
                 key={i}
                 onClick={() => goTo(i)}
                 aria-label={`Go to prompt ${i + 1}`}
-                className="outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+                className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <motion.div
-                  animate={{
-                    width: i === current ? 24 : 8,
-                    opacity: i === current ? 1 : 0.35,
-                  }}
+                  animate={{ width: i === current ? 24 : 8, opacity: i === current ? 1 : 0.35 }}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   className="h-2 rounded-full bg-primary"
                 />
@@ -163,7 +189,7 @@ export default function Today() {
           </motion.div>
         )}
 
-        {/* Select & shoot button */}
+        {/* Camera button */}
         {!loading && (
           <motion.button
             initial={{ opacity: 0, y: 20 }}
@@ -172,7 +198,7 @@ export default function Today() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.92 }}
             onClick={handleSelect}
-            className="flex h-20 w-20 items-center justify-center rounded-full gradient-warm shadow-soft text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none"
+            className="flex h-20 w-20 items-center justify-center rounded-full gradient-warm shadow-soft text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label={`Take a photo for: ${prompts[current]}`}
           >
             <Camera className="h-8 w-8" />
