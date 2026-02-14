@@ -8,9 +8,7 @@
 import { callGemini } from "./GeminiClient";
 import { mockPrompts } from "../mock-data";
 
-// Cache so we only call the API once per day per session
-let cachedPrompt: string | null = null;
-let cachedDate: string | null = null;
+// ---------- Helpers ----------
 
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
@@ -21,13 +19,28 @@ function fallback(): string {
   return mockPrompts[dayIndex % mockPrompts.length];
 }
 
+// ---------- Main Function ----------
+
 export async function generatePrompt(): Promise<string> {
   const today = todayKey();
 
-  // Return cache if same day
-  if (cachedPrompt && cachedDate === today) {
-    return cachedPrompt;
+  // Check localStorage cache first (prevents hot reload regen)
+  const stored = localStorage.getItem("dailyPrompt");
+
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+
+      if (parsed.date === today && parsed.prompt) {
+        console.log("Using cached prompt:", parsed.prompt);
+        return parsed.prompt;
+      }
+    } catch (err) {
+      console.warn("Failed to parse stored prompt");
+    }
   }
+
+  console.log("Calling Gemini for date:", today);
 
   try {
     const result = await callGemini({
@@ -55,11 +68,31 @@ Today's date: ${today}`,
       },
     });
 
-    cachedPrompt = result || fallback();
-    cachedDate = today;
-    return cachedPrompt;
+    const prompt = result?.trim() || fallback();
+
+    // Save to localStorage
+    localStorage.setItem(
+      "dailyPrompt",
+      JSON.stringify({
+        date: today,
+        prompt,
+      })
+    );
+
+    return prompt;
   } catch (err) {
-    console.warn("generatePrompt: Gemini call failed, using fallback.", err);
-    return fallback();
+    console.warn("Gemini call failed, using fallback.", err);
+
+    const prompt = fallback();
+
+    localStorage.setItem(
+      "dailyPrompt",
+      JSON.stringify({
+        date: today,
+        prompt,
+      })
+    );
+
+    return prompt;
   }
 }
