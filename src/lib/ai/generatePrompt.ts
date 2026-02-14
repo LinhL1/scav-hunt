@@ -1,98 +1,75 @@
 /**
  * src/lib/ai/generatePrompt.ts
  *
- * Uses Gemini to generate a fresh creative photo prompt each day.
- * Falls back to the mock list if the API call fails.
+ * Generates 3 distinct daily photo prompts via Gemini.
+ * Cached per day so only 1 API call is made regardless of re-renders.
+ * Falls back to 3 picks from mockPrompts if the API fails.
  */
 
-import { callGemini } from "./GeminiClient";
+import { callGemini } from "./geminiClient";
 import { mockPrompts } from "../mock-data";
 
-// ---------- Helpers ----------
+let cachedPrompts: string[] | null = null;
+let cachedDate: string | null = null;
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  return new Date().toISOString().slice(0, 10);
 }
 
-function fallback(): string {
+function fallback(): string[] {
   const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-  return mockPrompts[dayIndex % mockPrompts.length];
+  return [0, 1, 2].map((offset) => mockPrompts[(dayIndex + offset) % mockPrompts.length]);
 }
 
-// ---------- Main Function ----------
-
-export async function generatePrompt(): Promise<string> {
+/** Returns 3 prompt strings for today */
+export async function generatePrompts(): Promise<string[]> {
   const today = todayKey();
-
-  // Check localStorage cache first (prevents hot reload regen)
-  const stored = localStorage.getItem("dailyPrompt");
-
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-
-      if (parsed.date === today && parsed.prompt) {
-        console.log("Using cached prompt:", parsed.prompt);
-        return parsed.prompt;
-      }
-    } catch (err) {
-      console.warn("Failed to parse stored prompt");
-    }
-  }
-
-  console.log("Calling Gemini for date:", today);
+  if (cachedPrompts && cachedDate === today) return cachedPrompts;
 
   try {
-    const result = await callGemini({
+    const raw = await callGemini({
       contents: [
         {
           parts: [
             {
               text: `You are a creative director for a daily photo scavenger hunt app.
-Generate a single short, evocative photo prompt for today.
+Generate exactly 3 distinct, short, evocative photo prompts for today.
 
 Rules:
-- 1–4 words only (e.g. "Golden hour", "Something tiny", "Your hands")
+- Each prompt is 1–4 words only (e.g. "Golden hour", "Something tiny", "Your hands")
+- All 3 must be different themes — one nature, one everyday object, one abstract/emotional
 - Should be achievable anywhere — indoors or outdoors
-- Spark curiosity or a moment of noticing something beautiful
-- Do NOT add punctuation, quotes, or explanation — just the prompt itself
+- Do NOT add punctuation, numbering, quotes, or explanation
+- Respond with ONLY valid JSON — an array of 3 strings, nothing else:
+["prompt one", "prompt two", "prompt three"]
 
 Today's date: ${today}`,
             },
           ],
         },
       ],
-      generationConfig: {
-        temperature: 0.9,
-        maxOutputTokens: 20,
-      },
+      generationConfig: { temperature: 0.9, maxOutputTokens: 80 },
     });
 
-    const prompt = result?.trim() || fallback();
+    const cleaned = raw.replace(/```json|```/gi, "").trim();
+    const start = cleaned.indexOf("[");
+    const end = cleaned.lastIndexOf("]");
+    if (start === -1 || end === -1) throw new Error("No array in response");
 
-    // Save to localStorage
-    localStorage.setItem(
-      "dailyPrompt",
-      JSON.stringify({
-        date: today,
-        prompt,
-      })
-    );
+    const parsed = JSON.parse(cleaned.slice(start, end + 1)) as string[];
+    if (!Array.isArray(parsed) || parsed.length < 3) throw new Error("Bad array");
 
-    return prompt;
+    cachedPrompts = parsed.slice(0, 3);
+    cachedDate = today;
+    return cachedPrompts;
   } catch (err) {
-    console.warn("Gemini call failed, using fallback.", err);
-
-    const prompt = fallback();
-
-    localStorage.setItem(
-      "dailyPrompt",
-      JSON.stringify({
-        date: today,
-        prompt,
-      })
-    );
-
-    return prompt;
+    console.warn("generatePrompts: falling back to mock.", err);
+    return fallback();
   }
+}
+
+/** Legacy single-prompt helper — returns the first of the 3 prompts */
+export async function generatePrompt(): Promise<string> {
+  const prompts = await generatePrompts();
+  return prompts[0];
 }
