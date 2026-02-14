@@ -34,7 +34,13 @@ export default function CameraPage() {
   const analyzingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    generatePrompt().then(setPrompt);
+    const selected = sessionStorage.getItem("sh_selected_prompt");
+    if (selected) {
+      setPrompt(selected);
+      sessionStorage.removeItem("sh_selected_prompt");
+    } else {
+      generatePrompt().then(setPrompt);
+    }
   }, []);
 
   // Cycle through analyzing messages while waiting

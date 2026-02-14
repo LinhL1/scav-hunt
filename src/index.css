@@ -138,3 +138,35 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
+
+.ticket {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Left notch */
+.ticket::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background: white; /* match card background */
+  border-radius: 50%;
+}
+
+/* Right notch */
+.ticket::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+}
