@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { NavLink, useLocation } from "react-router-dom";
-import { Sun, Users, Camera, User, Settings } from "lucide-react";
+import { Map, Users, Camera, ChartBar, Settings } from "lucide-react";
 
 const tabs = [
-  { path: "/", label: "Today", icon: Sun },
+  { path: "/", label: "Map", icon: Map  },
   { path: "/friends", label: "Feed", icon: Users },
   { path: "/profile", label: "Profile", icon: User },
   { path: "/settings", label: "Settings", icon: Settings },
