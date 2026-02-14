@@ -5,7 +5,7 @@ import { Map, Users, Camera, ChartBar, Settings } from "lucide-react";
 const tabs = [
   { path: "/", label: "Map", icon: Map  },
   { path: "/friends", label: "Feed", icon: Users },
-  { path: "/profile", label: "Profile", icon: User },
+  { path: "/profile", label: "Stats", icon: ChartBar },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 
