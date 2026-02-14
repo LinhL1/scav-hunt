@@ -7,12 +7,20 @@ export interface User {
 export interface Submission {
   id: string;
   userId: string;
-  prompt: string;
+  prompt?: string;           // Keep for backwards compatibility with mock data
+  promptText?: string;       // Add this - what Firebase stores
+  promptId?: string;         // Add this too
+  promptDate?: string;       // And this
   photoUrl: string;
   caption?: string;
   aiFeedback: string;
   altText: string;
-  createdAt: Date;
+  createdAt: Date | any;     // Can be Date or Firebase Timestamp
+  username?: string;         // Add this - Firebase stores it
+  userAvatar?: string;       // Add this too
+  isValid?: boolean;         // Add this
+  likes?: number;            // Add this
+  likedBy?: string[];        // Add this
 }
 
 export const currentUser: User = {

@@ -2,6 +2,7 @@
  * src/pages/CameraPage.tsx
  */
 
+import { submitPhoto } from "@/lib/submissions";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { generatePrompt } from "@/lib/ai/generatePrompt";
@@ -70,46 +71,60 @@ export default function CameraPage() {
   }, []);
 
   const handleSubmit = useCallback(
-    async (caption: string) => {
-      setState("analyzing");
-      setAnalyzingMessage(ANALYZING_MESSAGES[0]);
+  async (caption: string) => {
+    console.log("🔵 handleSubmit called");
+    setState("analyzing");
+    setAnalyzingMessage(ANALYZING_MESSAGES[0]);
 
-      try {
-        const imageFile = imageFileRef.current ?? undefined;
-
-        const [analysis, generatedAlt] = await Promise.all([
-          analyzePhoto(prompt, "", imageFile),
-          imageFile
-            ? summarizeImage(imageFile, prompt)
-            : Promise.resolve(`Your photo for the prompt: ${prompt}`),
-        ]);
-
-        setFeedback(analysis.feedback);
-        setAltText(generatedAlt);
-
-        if (analysis.matches) {
-          addUserSubmission({
-            id: `user-sub-${Date.now()}`,
-            userId: currentUser.id,
-            prompt,
-            photoUrl,
-            caption: caption.trim() || undefined,
-            aiFeedback: analysis.feedback,
-            altText: generatedAlt,
-            createdAt: new Date(),
-          });
-          setState("success");
-        } else {
-          setState("rejected");
-        }
-      } catch (err) {
-        console.error("Submission error:", err);
-        // On unexpected error fall back to success so user isn't stuck
-        setState("success");
+    try {
+      const imageFile = imageFileRef.current;
+      if (!imageFile) {
+        console.log("❌ No image file");
+        return;
       }
-    },
-    [prompt, photoUrl]
-  );
+
+      console.log("🔵 Starting analysis...");
+      const [analysis, generatedAlt] = await Promise.all([
+        analyzePhoto(prompt, "", imageFile),
+        summarizeImage(imageFile, prompt),
+      ]);
+
+      console.log("✅ Analysis complete:", analysis);
+      setFeedback(analysis.feedback);
+      setAltText(generatedAlt);
+
+      if (analysis.matches) {
+        console.log("🔵 Photo matches! Uploading to Firebase...");
+        
+        const today = new Date().toISOString().split('T')[0];
+        
+        await submitPhoto({
+          userId: currentUser.id,
+          username: currentUser.name,
+          userAvatar: currentUser.avatar,
+          promptId: "prompt_1",
+          promptText: prompt,
+          promptDate: today,
+          photo: imageFile,
+          caption: caption.trim(),
+          isValid: analysis.matches,
+          aiFeedback: analysis.feedback,
+          altText: generatedAlt,
+        });
+        
+        console.log("✅ Uploaded to Firebase!");
+        setState("success");
+      } else {
+        console.log("❌ Photo rejected");
+        setState("rejected");
+      }
+    } catch (err) {
+      console.error("❌ Submission error:", err);
+      setState("success");
+    }
+  },
+  [prompt]
+);
 
   const handleRetry = useCallback(() => {
     imageFileRef.current = null;

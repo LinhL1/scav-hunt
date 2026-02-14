@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { getFeedSubmissions, type Submission } from "@/lib/mock-data";
+import { type Submission } from "@/lib/mock-data";
 import { speakText, stopSpeaking } from "@/lib/ai/speakText";
 import FriendPost from "@/components/FriendPost";
+import { subscribeFeed } from "@/lib/feed";
 
 function isScreenReaderOn(): boolean {
   try {
@@ -13,29 +14,29 @@ function isScreenReaderOn(): boolean {
 }
 
 export default function Friends() {
-  const [submissions, setSubmissions] = useState<Submission[]>(() =>
-    getFeedSubmissions()
-  );
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Re-sync when navigating back from camera
+  // Fetch from Firebase in real-time
   useEffect(() => {
-    const refresh = () => setSubmissions(getFeedSubmissions());
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
-    return () => {
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
-    };
+    const today = new Date().toISOString().split('T')[0];
+    
+    const unsubscribe = subscribeFeed(today, (subs) => {
+      setSubmissions(subs);
+      setLoading(false);
+    });
+    
+    return () => unsubscribe();
   }, []);
 
   // Announce the page when screen reader is on
   useEffect(() => {
-    if (!isScreenReaderOn()) return;
+    if (!isScreenReaderOn() || loading) return;
     speakText(
       `Friends feed. ${submissions.length} photo${submissions.length !== 1 ? "s" : ""} from your friends today.`
     );
     return () => stopSpeaking();
-  }, [submissions.length]);
+  }, [submissions.length, loading]);
 
   return (
     <main className="min-h-screen px-4 pb-24 pt-6">
@@ -48,9 +49,15 @@ export default function Friends() {
       </motion.h1>
 
       <div className="mx-auto flex max-w-lg flex-col gap-5">
-        {submissions.map((sub, i) => (
-          <FriendPost key={sub.id} submission={sub} index={i} />
-        ))}
+        {loading ? (
+          <p className="text-center text-muted-foreground">Loading...</p>
+        ) : submissions.length === 0 ? (
+          <p className="text-center text-muted-foreground">No photos yet today!</p>
+        ) : (
+          submissions.map((sub, i) => (
+            <FriendPost key={sub.id} submission={sub} index={i} />
+          ))
+        )}
       </div>
     </main>
   );

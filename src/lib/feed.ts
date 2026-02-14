@@ -5,7 +5,7 @@ export async function getTodaysFeed(promptDate: string) {
   const q = query(
     collection(db, 'submissions'),
     where('promptDate', '==', promptDate),
-    where('isValid', '==', true),  // Only show validated submissions
+    where('isValid', '==', true),
     orderBy('submittedAt', 'desc')
   );
   

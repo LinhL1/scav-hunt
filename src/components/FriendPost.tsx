@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Submission, getUserById } from "@/lib/mock-data";
 import { formatDistanceToNow } from "date-fns";
+import { Timestamp } from "firebase/firestore";
 
 interface FriendPostProps {
   submission: Submission;
@@ -10,6 +11,11 @@ interface FriendPostProps {
 export default function FriendPost({ submission, index }: FriendPostProps) {
   const user = getUserById(submission.userId);
   if (!user) return null;
+
+  // Convert Firebase Timestamp to Date
+  const createdAt = submission.createdAt instanceof Timestamp 
+    ? submission.createdAt.toDate() 
+    : new Date(submission.createdAt);
 
   return (
     <motion.article
@@ -29,11 +35,11 @@ export default function FriendPost({ submission, index }: FriendPostProps) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground">{user.name}</p>
           <p className="text-xs text-muted-foreground">
-            {formatDistanceToNow(submission.createdAt, { addSuffix: true })}
+            {formatDistanceToNow(createdAt, { addSuffix: true })}
           </p>
         </div>
         <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
-          {submission.prompt}
+          {submission.promptText || submission.prompt}
         </span>
       </div>
 
