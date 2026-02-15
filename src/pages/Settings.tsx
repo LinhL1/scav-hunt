@@ -297,13 +297,13 @@ export default function Settings() {
             value={darkMode}
             onChange={setDarkMode}
           />
-          <ToggleRow
+          {/* <ToggleRow
             icon={<Contrast className="h-4 w-4" />}
             label="High Contrast"
             description="Increase contrast for better visibility"
             value={highContrast}
             onChange={setHighContrast}
-          />
+          /> */}
         </Section>
 
         {/* ── Accessibility ── */}

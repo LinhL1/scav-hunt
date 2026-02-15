@@ -241,7 +241,7 @@ export default function Today() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="-mt-1 mb-1 font-mono text-xs font-medium tracking-[0.2em] uppercase text-muted-foreground"
+        className="font-mono text-xs font-medium tracking-[0.2em] uppercase text-muted-foreground"
       >
         Impromptu
       </motion.div>
@@ -249,7 +249,7 @@ export default function Today() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="mb-8 text-[10px] font-mono tracking-widest text-muted-foreground/50 uppercase"
+        className="mb-8 text-[10px] font-mono tracking-widest text-muted-foreground/70 uppercase"
       >
         pick a prompt
       </motion.div>
