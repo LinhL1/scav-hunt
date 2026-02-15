@@ -85,7 +85,7 @@ export default function SubmissionRejected({
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
         onClick={onRetry}
-        className="flex items-center gap-2 rounded-xl gradient-warm px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-soft focus-visible:ring-2 focus-visible:ring-ring outline-none"
+        className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-soft focus-visible:ring-2 focus-visible:ring-ring outline-none"
       >
         <RefreshCcw className="h-4 w-4" />
         Try again

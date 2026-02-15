@@ -71,7 +71,7 @@ export default function PhotoPreview({
         whileTap={{ scale: 0.98 }}
         onClick={() => onSubmit(caption)}
         disabled={submitting}
-        className="flex items-center justify-center gap-2 rounded-xl gradient-warm px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-soft disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-ring outline-none"
+        className="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-soft disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-ring outline-none"
         aria-label="Share your photo"
       >
         {submitting ? (

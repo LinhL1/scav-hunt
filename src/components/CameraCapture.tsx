@@ -200,7 +200,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleCameraClick}
-              className="flex h-28 w-28 items-center justify-center rounded-full gradient-warm shadow-soft text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none"
+              className="mt-20 flex h-28 w-28 items-center justify-center rounded-full bg-primary shadow-soft text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none"
               aria-label="Take a photo"
             >
               <Camera className="h-10 w-10" />
