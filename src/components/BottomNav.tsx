@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Map, Users, Camera, ChartBar, Settings } from "lucide-react";
 
 const tabs = [
-  { path: "/", label: "Map", icon: Map  },
+  { path: "/", label: "Explore", icon: Map  },
   { path: "/friends", label: "Feed", icon: Users },
   { path: "/profile", label: "Stats", icon: ChartBar },
   //{ path: "/profile", label: "Profile", icon: Users },
