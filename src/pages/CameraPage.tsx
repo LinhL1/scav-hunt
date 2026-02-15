@@ -225,7 +225,7 @@ function AnalyzingOverlay({
       exit={{ opacity: 0, scale: 0.96 }}
       className="flex flex-col gap-4 w-full"
     >
-      <FilmStripFrame>
+      {/* <FilmStripFrame> */}
         <div className="relative overflow-hidden" style={{ aspectRatio: "1/1" }}>
           <img
             src={photoUrl}
@@ -330,7 +330,7 @@ function AnalyzingOverlay({
             />
           ))}
         </div>
-      </FilmStripFrame>
+      {/* </FilmStripFrame> */}
 
       {/* ticket-strip status label */}
       <div

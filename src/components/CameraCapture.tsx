@@ -16,11 +16,10 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   const [cameraError, setCameraError] = useState(false);
   const nativeInputRef = useRef<HTMLInputElement>(null);
 
-  //const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const hasCameraSupport =
-  typeof navigator !== "undefined" &&
-  !!navigator.mediaDevices &&
-  !!navigator.mediaDevices.getUserMedia;
+    typeof navigator !== "undefined" &&
+    !!navigator.mediaDevices &&
+    !!navigator.mediaDevices.getUserMedia;
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -31,50 +30,33 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   }, []);
 
   const startCamera = useCallback(async (facing: "user" | "environment") => {
-  setCameraError(false);
-
-  try {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-    }
-
-    let stream: MediaStream;
-
+    setCameraError(false);
     try {
-      // Preferred constraints
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: facing },
-          width: { ideal: 1080 },
-          height: { ideal: 1080 },
-        },
-        audio: false,
-      });
-    } catch {
-      // Fallback for emulators / weird devices
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false,
-      });
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: facing }, width: { ideal: 1080 }, height: { ideal: 1080 } },
+          audio: false,
+        });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setCameraOpen(true);
+    } catch (err) {
+      console.error("Camera error:", err);
+      setCameraError(true);
+      setCameraOpen(false);
+      nativeInputRef.current?.click();
     }
-
-    streamRef.current = stream;
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
-      await videoRef.current.play();
-    }
-
-    setCameraOpen(true);
-  } catch (err) {
-    console.error("Camera error:", err);
-    setCameraError(true);
-    setCameraOpen(false);
-
-    // Final fallback → native camera input
-    nativeInputRef.current?.click();
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -85,29 +67,25 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
   }, []);
 
   const handleCameraClick = useCallback(async () => {
-  if (hasCameraSupport) {
-    await startCamera(facingMode);
-  } else {
-    // Fallback for older browsers / weird emulators
-    nativeInputRef.current?.click();
-  }
-}, [hasCameraSupport, startCamera, facingMode]);
+    if (hasCameraSupport) {
+      await startCamera(facingMode);
+    } else {
+      nativeInputRef.current?.click();
+    }
+  }, [hasCameraSupport, startCamera, facingMode]);
 
   const takePhoto = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
-
     const size = Math.min(video.videoWidth, video.videoHeight);
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     const offsetX = (video.videoWidth - size) / 2;
     const offsetY = (video.videoHeight - size) / 2;
     ctx.drawImage(video, offsetX, offsetY, size, size, 0, 0, size, size);
-
     canvas.toBlob(
       (blob) => {
         if (blob) {
@@ -188,7 +166,7 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="flex flex-col items-center gap-6"
+            className="flex flex-col items-center gap-4"
           >
             {cameraError && (
               <p className="text-sm text-destructive text-center max-w-xs">
@@ -196,14 +174,18 @@ export default function CameraCapture({ onCapture }: CameraCaptureProps) {
               </p>
             )}
 
+            {/* Camera button — matches Today.tsx style exactly */}
             <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 25 }}
               whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.94, y: 3 }}
               onClick={handleCameraClick}
-              className="mt-20 flex h-28 w-28 items-center justify-center rounded-full bg-primary shadow-soft text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none"
+              className="mt-20 flex h-20 w-20 items-center justify-center rounded-full bg-primary border-b-4 border-[#B84D2C] shadow-soft text-white outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label="Take a photo"
             >
-              <Camera className="h-10 w-10" />
+              <Camera className="h-8 w-8" />
             </motion.button>
 
             <motion.button
