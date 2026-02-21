@@ -2,7 +2,7 @@
 
 # Impromptu
 
-**Impromptu** is a social scavenger hunt app built in a 48-hour team hackathon. It won **Best Use of Gemini API** at HackBeanpot 2026, an award sponsored by MLH, which partners with Google Cloud. The app encourages users to complete daily photo challenges, explore their surroundings, and share their finds with friends, all powered by the Gemini API for real-time validation and feedback. Watch the demo [here](https://www.youtube.com/watch?v=PwlruXmhEeQ)!
+**Impromptu** is a social scavenger hunt app built in a 48-hour team hackathon. It won **Best Use of Gemini API** at HackBeanpot 2026, an award sponsored by MLH, which partners with Google Cloud. The app encourages users to complete daily photo challenges, explore their surroundings, and share their finds with friends, all powered by the Gemini API for real-time validation and feedback. See it on Devpost with the full demo [here](https://devpost.com/software/project-vixebdfs185p)!
 
 ## Features
 - **Daily Photo Challenges**: Users receive 3 unique prompts each day to capture or upload photos.
