@@ -1,4 +1,4 @@
-# Impromptu
+# Impromptu (2026 [MLH] Best Use of Gemini API HackBeanpot Winner)
 
 **Impromptu** is a social scavenger hunt app built in a 48-hour team hackathon. The app encourages users to complete daily photo challenges, explore their surroundings, and share their finds with friends, all powered by the Gemini API for real-time validation and feedback.
 
@@ -7,7 +7,7 @@
 
 ## Features
 - **Daily Photo Challenges**: Users receive 3 unique prompts each day to capture or upload photos.
-- **AI Validation**: Integrated **Gemini API** to check image-prompt alignment and provide live feedback.
+- **AI Validation**: Integrated **Gemini API** to check image–prompt alignment and provide live feedback.
 - **Social Gallery**: View friends’ submissions and maintain streaks.
 - **Responsive UI**: Built with **React**, styled with **Tailwind CSS**, and animated using **Framer Motion**.
 
@@ -23,7 +23,7 @@ Clone the repository, install dependencies, configure environment variables, and
 ```bash
 # Clone the repo
 git clone https://github.com/LinhL1/Impromptu/
-cd impromptu
+cd Impromptu
 
 # Install dependencies
 npm install
