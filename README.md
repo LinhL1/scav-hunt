@@ -1,4 +1,4 @@
-![caption](media/impromptu-demo.gif)
+![caption](media/impromptu-appdemo.gif)
 
 # Impromptu
 
